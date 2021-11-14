@@ -3,13 +3,22 @@ import CasinoContract from "./contracts/Casino.json";
 import TicTacToeContract from "./contracts/TicTacToe.json";
 import getWeb3 from "./getWeb3";
 import GameList from './components/games/list'
-import Game from './components/tic-tac-toe/game'
+import TicTacToeGame from './components/tic-tac-toe/game'
 import Casino from './models/casino';
 
 import "./App.css";
 
 class App extends Component {
-  state = { storageValue: 0, web3: null, accounts: null, contract: null, eth: null, games: [], view: null, casinoAddress: '0xC25FFDBef989c261335c71b689fefaD1BcfaDf64', casino: null };
+  state = {
+    web3: null,
+    accounts: null,
+    player: null,
+    games: [],
+    view: null,
+    casinoAddress: '0x1847136F06C488A3593FB041683950FCEba6c96A',
+    casino: null,
+    activeGame: null,
+  };
 
   componentDidMount = async () => {
     try {
@@ -17,23 +26,34 @@ class App extends Component {
       const web3 = await getWeb3();
 
       // Use web3 to get the user's accounts.
-      const accounts = await web3.eth.getAccounts();
+      const accounts = (await web3.eth.getAccounts()).map(x => x.toLowerCase());
 
-      // Get the contract instance.
-      const networkId = await web3.eth.net.getId();
-      const deployedNetwork = TicTacToeContract.networks[networkId];
-      const instance = new web3.eth.Contract(
-        TicTacToeContract.abi,
-        deployedNetwork && deployedNetwork.address,
-      );
+      // Register for updates
+      window.ethereum.on('accountsChanged', (accounts) => {
+        // Time to reload your interface with accounts[0]!
+        this.setState({ accounts: accounts.map(x => x.toLowerCase()), player: accounts[0].toLowerCase() });
+      })
 
       // Casino
       const casino = new Casino(web3, this.state.casinoAddress);
-      const games = await casino.getOpenGames()
+      const games = await casino.getActiveGames();
+
+      // listen for events
+
+      // new game
+      casino.contract.events.NewTicTacToeGame(
+        {
+          filter: { registrator: this.props.player }
+        },
+        async (err, evt) => {
+          console.log(`Created new game with id=${evt.returnValues.id}, registrator=${evt.returnValues.registrator}, isX=${evt.returnValues.isX}`);
+          this.setState({ games: await casino.getActiveGames() });
+        }
+      );
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance, games, casino }, this.runExample);
+      this.setState({ web3, accounts, games, casino, player: accounts[0] });
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -43,18 +63,9 @@ class App extends Component {
     }
   };
 
-  runExample = async () => {
-    const { accounts, contract } = this.state;
-
-    // Stores a given value, 5 by default.
-    //await contract.methods.set(5).send({ from: accounts[0] });
-
-    // Get the value from the contract to prove it worked.
-    //const response = await contract.methods.get().call();
-
-    // Update state with the result.
-    //this.setState({ storageValue: response });
-  };
+  onOpenGame(address) {
+    this.setState({ view: "game", activeGame: address });
+  }
 
   render() {
     if (!this.state.web3) {
@@ -63,15 +74,18 @@ class App extends Component {
     return (
       <div className="App">
         { !this.state.view && 
-          <GameList games={this.state.games} web3={this.state.web3} casino={this.state.casino} player={this.state.accounts[0]} />
+          <GameList games={this.state.games} web3={this.state.web3} casino={this.state.casino} player={this.state.player} onOpenGame={this.onOpenGame.bind(this)} />
         }
         { this.state.view === "game" &&
-          <Game
+          <TicTacToeGame
             web3={this.state.web3}
-            contract={this.state.contract}
-            player={this.state.accounts[0]}
+            address={this.state.activeGame}
+            player={this.state.player}
             />
         }
+        <div>
+          Active account: {this.state.player}
+        </div>
       </div>
     );
   }

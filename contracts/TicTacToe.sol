@@ -5,15 +5,16 @@ import './Game.sol';
 
 contract TicTacToe is Game {
 
-  event Registered(uint _when, address _who, bool _isX);
-  event PlayerXJoined(address _who, uint _when);
-  event PlayerOJoined(address _who, uint _when);
-  event FirstMove(uint _when);
-  event Move(address _who, uint _turn, uint _pos, uint _when);
-  event End(uint _when, uint _turn);
-  event Draw(uint _when, uint _turn);
-  event XWin(uint _when, uint _turn);
-  event OWin(uint _when, uint _turn);
+  event Registered(uint _id, uint _when, address _who);
+  event PlayerXJoined(uint _id, address _who, uint _when);
+  event PlayerOJoined(uint _id, address _who, uint _when);
+  event FirstMove(uint _id, uint _when);
+  event Move(uint _id, address _who, uint _turn, uint _pos, uint _when);
+  event End(uint _id, uint _when, uint _turn, uint _balance, uint _pot);
+  event Draw(uint _id, uint _when, uint _turn);
+  event XWin(uint _id, address _who, uint _when, uint _turn);
+  event OWin(uint _id, address _who, uint _when, uint _turn);
+  event Transfer(uint _id, address _who, uint _value);
 
   struct Movement {
     address who;
@@ -23,9 +24,8 @@ contract TicTacToe is Game {
   }
 
   uint minBet = 0.001 ether;
-  address _owner = msg.sender;
-  address public registrator;
-  bool public registratorIsX;
+  address _owner = msg.sender; // casino that owns the game
+  address public registrator; // player that registered the game in the first place
 
   // timestamps
   uint public registered = block.timestamp;
@@ -36,6 +36,7 @@ contract TicTacToe is Game {
   // record movements
   Movement[] public moves;
 
+  uint public id;
   uint private bet = 0;
   uint private tip = 0;
 
@@ -56,7 +57,9 @@ contract TicTacToe is Game {
   }
 
   modifier activeGame() {
-    require(!hasTimedOut() && !draw() && winner() == address(0), "This game has already ended!");
+    require(!hasTimedOut(), "This game has already ended (reason: timeout)");
+    require(!draw(), "This game has already ended (reason: draw)");
+    require(winner() == address(0), "This game has already ended (reason: winner)");
     _;
   }
 
@@ -65,10 +68,10 @@ contract TicTacToe is Game {
     _;
   }
 
-  constructor(address _registrator, bool _isX) {
+  constructor(uint _id, address _registrator) {
+    id = _id;
     registrator = _registrator;
-    registratorIsX = _isX;
-    emit Registered(registered, _registrator, _isX);
+    emit Registered(id, registered, _registrator);
   }
 
   function name() override external pure returns (string memory) {
@@ -84,15 +87,13 @@ contract TicTacToe is Game {
   }
 
   function hasTimedOut() public view returns (bool) {
-    return block.timestamp > started + timeout;
+    return started > 0 && block.timestamp > started + timeout;
   }
 
-  function registerX() external payable {
+  function registerX(address player) external payable {
     require(playerX == address(0), "Player X is already registered");
-    if (registratorIsX) {
-      require(msg.sender == registrator, "Player X is already reserved");
-    }
-    require(playerO != msg.sender, "Player X cannot be the same as player O");
+    require(msg.sender == player || registrator == player, "Only the sender or the registrator can select players");
+    require(playerO != player, "Player X cannot be the same as player O");
     require(msg.value > minBet && msg.value >= bet, "A bet is required to participate");
     if (bet > 0 && msg.value > bet) {
       // thanks for the tip to the casino
@@ -101,15 +102,13 @@ contract TicTacToe is Game {
     if (bet == 0) {
       bet = msg.value;
     }
-    playerX = msg.sender;
+    playerX = player;
   }
 
-  function registerO() external payable {
+  function registerO(address player) external payable {
     require(playerO == address(0), "Player O is already registered");
-    if (!registratorIsX) {
-      require(msg.sender == registrator, "Player O is already reserved");
-    }
-    require(playerX != msg.sender, "Player O cannot be the same as player X");
+    require(msg.sender == player || registrator == player, "Only the sender or the registrator can select players");
+    require(playerX != player, "Player O cannot be the same as player X");
     require(msg.value > minBet && msg.value >= bet, "A bet is required to participate");
     if (bet > 0 && msg.value > bet) {
       // thanks for the tip to the casino
@@ -118,7 +117,7 @@ contract TicTacToe is Game {
     if (bet == 0) {
       bet = msg.value;
     }
-    playerO = msg.sender;
+    playerO = player;
   }
 
   function isEmpty(uint _pos) internal view returns (bool) {
@@ -135,15 +134,23 @@ contract TicTacToe is Game {
 
   function closeGame(address _winner) internal {
     ended = block.timestamp;
-    emit End(block.timestamp, turn);
+    emit End(id, block.timestamp, turn, address(this).balance, calculateEarnings());
 
     if (_winner == address(0)) {
       // Draw - split in half (minus fee)
-      payable(playerX).transfer(calculateEarnings()/2);
-      payable(playerO).transfer(calculateEarnings()/2);
+      uint halfEarnings = calculateEarnings()/2;
+      payable(playerX).transfer(halfEarnings);
+      emit Transfer(id, playerX, halfEarnings);
+      payable(playerO).transfer(halfEarnings);
+      emit Transfer(id, playerO, halfEarnings);
     } else {
-      payable(_winner).transfer(calculateEarnings());
+      uint earnings = calculateEarnings();
+      payable(_winner).transfer(earnings);
+      emit Transfer(id, _winner, earnings);
     }
+    uint casinoFees = address(this).balance;
+    payable(_owner).transfer(casinoFees);
+    emit Transfer(id, _owner, casinoFees);
   }
 
   function move(uint _pos) external onlyPlayers activeGame {
@@ -161,13 +168,13 @@ contract TicTacToe is Game {
     mark(_pos, msg.sender);
 
     // register the movement
-    emit Move(msg.sender, turn, _pos, block.timestamp);
+    emit Move(id, msg.sender, turn, _pos, block.timestamp);
     moves.push(Movement(msg.sender, block.timestamp, turn, _pos));
 
     // register the first movement
     if (turn == 0) {
       started = block.timestamp;
-      emit FirstMove(block.timestamp);
+      emit FirstMove(id, block.timestamp);
     }
 
     // advance turn
@@ -177,15 +184,15 @@ contract TicTacToe is Game {
     address _winner = winner();
     
     if (draw()) {
-      emit Draw(block.timestamp, turn);
+      emit Draw(id, block.timestamp, turn);
       closeGame(_winner);
     }
     else if (_winner == playerX) {
-      emit XWin(block.timestamp, turn);
+      emit XWin(id, _winner, block.timestamp, turn);
       closeGame(_winner);
     }
     else if (_winner == playerO) {
-      emit OWin(block.timestamp, turn);
+      emit OWin(id, _winner, block.timestamp, turn);
       closeGame(_winner);
     }
   }

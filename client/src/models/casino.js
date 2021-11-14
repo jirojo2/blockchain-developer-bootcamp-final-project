@@ -8,13 +8,17 @@ class Casino {
 
     async getOpenGames() {
         const games = await this.contract.methods.openGamesList().call();
-        // TODO: get info from games
+        return games;
+    }
+
+    async getActiveGames() {
+        const games = await this.contract.methods.activeGamesList().call();
         return games;
     }
 
     async createGameTicTacToe(player, isX) {
-        const id = await this.contract.methods.newTicTacToeGame(player, isX).send({ from: player });
-        return id;
+        const tx = await this.contract.methods.newTicTacToeGame(player, isX).send({ from: player, value: "10000000000000000000" });
+        return tx;
     }
 
 }

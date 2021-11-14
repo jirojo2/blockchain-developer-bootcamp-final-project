@@ -8,9 +8,8 @@ class GameList extends Component {
 
     async createGame(isX) {
         // call the casino contract to deploy a new game contract with our account as registrator
-        const id = await this.props.casino.createGameTicTacToe(this.props.player, isX);
-        // TODO: do soemthing with this?
-        console.log(`Created new game with id=${id}, player=${this.props.player}, isX=${isX}`);
+        const tx = await this.props.casino.createGameTicTacToe(this.props.player, isX);
+        // the new game will be detected on an event
     }
 
     async createGameAsX() {
@@ -23,7 +22,7 @@ class GameList extends Component {
 
     render() {
         let items = this.props.games.map((game, i) => {
-            return <GameRow web3={this.props.web3} address={game} player={this.props.player} key={i}></GameRow>
+            return <GameRow web3={this.props.web3} address={game} player={this.props.player} key={i} onOpenGame={this.props.onOpenGame}></GameRow>
         });
         return (
             <div>
