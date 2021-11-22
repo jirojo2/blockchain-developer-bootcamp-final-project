@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import TicTacToeContract from "../../contracts/TicTacToe.json";
+import Button from 'react-bootstrap/Button';
 
 export class GameRow extends Component {
     state = { id: null, type: null, contract: null, registrator: null, isX: null, isActive: null }
@@ -22,7 +23,8 @@ export class GameRow extends Component {
     }
 
     async joinAsX() {
-        await this.state.contract.methods.registerX(this.props.player).send({ from: this.props.player, value: "10000000000000000000" });
+        const tx = await this.state.contract.methods.registerX(this.props.player).send({ from: this.props.player, value: "10000000000000000000" });
+        await tx.wait(1);
         // TODO: notify the registrator somehow, so he can also join the game?
         // TODO: transition to the game view with the game address
     }
@@ -41,17 +43,21 @@ export class GameRow extends Component {
 
         let registerButton = null;
         if (this.state.playerX === this.props.player || this.state.playerO === this.props.player) {
-            registerButton = <a onClick={this.openGame.bind(this)}>Open game</a>
+            registerButton = <Button onClick={this.openGame.bind(this)}>Open game</Button>
         } else if (this.state.playerX === "0x0000000000000000000000000000000000000000") {
-            registerButton = <a onClick={this.joinAsX.bind(this)}>Join as X</a>
+            registerButton = <Button onClick={this.joinAsX.bind(this)}>Join as X</Button>
         } else if (this.state.playerO === "0x0000000000000000000000000000000000000000") {
-            registerButton = <a onClick={this.joinAsO.bind(this)}>Join as O</a>
+            registerButton = <Button onClick={this.joinAsO.bind(this)}>Join as O</Button>
         }
 
         return (
-            <li key={this.state.id}>
-                {this.state.type} {this.props.address} registered by {this.state.registrator} | [{registerButton}]
-            </li>
+            <tr>
+                <td>{this.state.id}</td>
+                <td>{this.state.type}</td>
+                <td>{this.props.address}</td>
+                <td>{this.state.registrator}</td>
+                <td>{registerButton}</td>
+            </tr>
         );
     }
 }

@@ -16,9 +16,8 @@ class Casino {
         return games;
     }
 
-    async createGameTicTacToe(player, isX) {
-        const tx = await this.contract.methods.newTicTacToeGame(player, isX).send({ from: player, value: "10000000000000000000" });
-        return tx;
+    createGameTicTacToe(player, isX) {
+        return this.contract.methods.newTicTacToeGame(player, isX).send({ from: player, value: "10000000000000000000" });
     }
 
 }

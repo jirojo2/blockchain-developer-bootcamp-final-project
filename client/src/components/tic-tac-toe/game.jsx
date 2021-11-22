@@ -37,8 +37,23 @@ const fmtAddress = (address) => {
 }
 
 class TicTacToeGame extends Component {
-    startMsg = "Click to start";
-    state = { board: Array(9).fill(""), isPlayer: "X", message: this.startMsg, contract: null, playerX: null, playerO: null, moves: [] };
+    state = { board: Array(9).fill(""), isPlayer: "X", contract: null, playerX: null, playerO: null, moves: [] };
+
+    msg() {
+        const turn = this.state.moves.length;
+        const turnForX = turn % 2 == 0;
+
+        if (this.state.winnerX) {
+            return "X won!"
+        }
+        if (this.state.winnerO) {
+            return "O won!"
+        }
+        if ((turnForX && this.props.player == this.state.playerX) || (!turnForX && this.props.player == this.state.playerO)) {
+            return "It's your move!";
+        }
+        return "Wait for the other player to move";
+    }
 
     move(who, turn, pos, when) {
         this.setState((state, props) => {
@@ -54,6 +69,18 @@ class TicTacToeGame extends Component {
         const contract = new this.props.web3.eth.Contract(TicTacToeContract.abi, this.props.address);
         const playerX = (await contract.methods.playerX().call()).toLowerCase();
         const playerO = (await contract.methods.playerO().call()).toLowerCase();
+        const turn = Number(await contract.methods.turn().call());
+        if (turn > 0) {
+            Array.from(Array(turn).keys()).map(async (i) => {
+                const move = await contract.methods.moves(i).call();
+                this.move(move.who, move.turn, move.pos, move.when);
+            });
+        }
+
+        if (isWon()) {
+            const winner = turn % 2 == 0? 'X' : 'O';
+            this.setState({ winner })
+        }
 
         // TODO: get current board and move history
 
@@ -71,11 +98,13 @@ class TicTacToeGame extends Component {
         contract.events.XWin((err, evt) => {
             console.log("X Win!!!");
             console.log(evt);
+            this.setState({ winner: 'X', winnerEvt: evt });
         });
         
         contract.events.OWin((err, evt) => {
             console.log("X Win!!!");
             console.log(evt);
+            this.setState({ winner: 'O', winnerEvt: evt });
         });
         
         contract.events.Draw((err, evt) => {
@@ -104,9 +133,6 @@ class TicTacToeGame extends Component {
     }
   
     refresh() {
-        this.setState({ board: Array(9).fill("") });
-        this.setState({ message: this.startMsg });
-        this.setState({ isPlayer: "X" });
     }
  
     handleInput(pos) {
@@ -133,9 +159,8 @@ class TicTacToeGame extends Component {
     render() {
         return (
             <div>
-                <Message value={this.state.message} />
+                <Message value={this.msg()} />
                 <Board onClick={this.handleInput.bind(this)} value={this.state.board} /> 
-                <Refresh onClick={this.refresh.bind(this)} value={'Refresh'} />
                 <p>Player's address: <i>{fmtAddress(this.props.player)}</i></p>
                 <p>Opponent's address: <i>{fmtAddress(this.opponent())}</i></p>
                 <p>Contract's address: <i>{fmtAddress(this.props.address)}</i></p>

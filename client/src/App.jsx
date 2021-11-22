@@ -1,11 +1,15 @@
 import React, { Component } from "react";
-import CasinoContract from "./contracts/Casino.json";
-import TicTacToeContract from "./contracts/TicTacToe.json";
 import getWeb3 from "./getWeb3";
 import GameList from './components/games/list'
 import TicTacToeGame from './components/tic-tac-toe/game'
 import Casino from './models/casino';
+import Sidebar from './components/sidebar/sidebar'
 
+import Container from 'react-bootstrap/Container'
+import Col from 'react-bootstrap/Col'
+import Row from 'react-bootstrap/Row'
+
+import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
 
 class App extends Component {
@@ -72,21 +76,27 @@ class App extends Component {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
     return (
-      <div className="App">
-        { !this.state.view && 
-          <GameList games={this.state.games} web3={this.state.web3} casino={this.state.casino} player={this.state.player} onOpenGame={this.onOpenGame.bind(this)} />
-        }
-        { this.state.view === "game" &&
-          <TicTacToeGame
-            web3={this.state.web3}
-            address={this.state.activeGame}
-            player={this.state.player}
-            />
-        }
-        <div>
-          Active account: {this.state.player}
-        </div>
-      </div>
+      <Container fluid>
+        <Row>
+          <Sidebar />
+          <Col>
+            { !this.state.view && 
+              <GameList games={this.state.games} web3={this.state.web3} casino={this.state.casino} player={this.state.player} onOpenGame={this.onOpenGame.bind(this)} />
+            }
+            { this.state.view === "game" &&
+              <TicTacToeGame
+                web3={this.state.web3}
+                address={this.state.activeGame}
+                player={this.state.player}
+                />
+            }
+            
+            <div>
+                Active account: {this.state.player}
+              </div>
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }
