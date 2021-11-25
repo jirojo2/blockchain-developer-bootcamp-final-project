@@ -11,6 +11,22 @@ The `Casino` contract keeps track of the active games and redirects the users to
 
 It is also funny to see the drastic effect of the gas fees on bets under 10 ether, but it is annecdotical for this POC.
 
+## Public ethereum account
+
+0x7659610a697EF7901D9Cbdb95e67835FA5546E60
+
+
+## TODO
+
+* Proper UI during the game
+* Menu and UI enhancements
+* UI: Gas and Balance info per turn
+* UI: Gas and Balance overview per account
+* UI: Login process with metamask?
+* Claim funds for idle games
+* Proxy contract for `Casino` to allow updates
+* Deploy in Rinkeby and update `deployed_address.txt`
+
 
 ## How to run locally
 
