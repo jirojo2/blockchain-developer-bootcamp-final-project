@@ -103,6 +103,7 @@ contract TicTacToe is Game {
       bet = msg.value;
     }
     playerX = player;
+    emit PlayerXJoined(id, player, block.timestamp);
   }
 
   function registerO(address player) external payable {
@@ -118,6 +119,7 @@ contract TicTacToe is Game {
       bet = msg.value;
     }
     playerO = player;
+    emit PlayerOJoined(id, player, block.timestamp);
   }
 
   function isEmpty(uint _pos) internal view returns (bool) {
@@ -265,6 +267,7 @@ contract TicTacToe is Game {
   }
 
   function claimFees() external onlyOwner onlyClosedGame {
+    // TODO: ideas to improve this smart contract... I had no time for this POC project :D
     // TODO: make it fair - only claim cash that went unclaimed ... TODO: add a threshold? force claim by owner after a timeout?
     // What happens if it times out???
     // The winner should be whoever moved last? or draw?

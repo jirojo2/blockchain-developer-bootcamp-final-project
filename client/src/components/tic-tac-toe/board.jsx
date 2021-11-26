@@ -16,12 +16,6 @@ const style = {
 // props has 'value' which is a array of 9 charectors that needs to de displayed in box.js
 // and a 'onClick' function that needs to be called when button is clicked
 // restoring array of box.jsx
-const BoardOld = (props) => (
-    <div style={style}>
-    {[...Array(9)].map((_, pos) => <Box key={pos} name={pos} onClick={()=>props.onClick(pos)} value={props.value[pos]}/>)}
-    </div>
-)
-
 const Board = (props) => (
     <Container style={{ maxWidth: "900px"}}>
         {[...Array(3)].map((_, i) => {

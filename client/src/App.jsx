@@ -21,7 +21,7 @@ class App extends Component {
     player: null,
     games: [],
     view: 'welcome',
-    casinoAddress: '0x6996E2BdE0e92ea89570E4E8bf15a3226De90d56',
+    casinoAddress: '0xf1E9Cd488CA3722e232588C198eC42A53a3A95DB',
     casino: null,
     casinoBalance: null,
     activeGame: null,

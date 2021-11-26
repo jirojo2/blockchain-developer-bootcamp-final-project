@@ -5,7 +5,7 @@ import web3 from 'web3';
 
 const Sidebar = (props) => {
     return (
-        <Col className="flex-shrink-0 p-3 text-white bg-dark" xs={2}>
+        <Col className="flex-shrink-0 p-3 text-white bg-dark" xs={3}>
             <a href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
                 <span className="fs-4">ethCasino</span>
             </a>

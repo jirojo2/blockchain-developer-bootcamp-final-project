@@ -22,7 +22,7 @@ const CreateGame = (props) => {
         props.casino.contract.events.NewTicTacToeGame(async (err, evt) => {
             const id = evt.returnValues.id;
             const address = await props.casino.contract.methods.games(id).call();
-            console.log('Newe TicTacToeGame')
+            console.log('New TicTacToeGame')
             console.log(evt)
             props.onOpenGame(address);
         })
