@@ -1,9 +1,11 @@
 import React, { Component } from "react";
 import getWeb3 from "./getWeb3";
-import GameList from './components/games/list'
-import TicTacToeGame from './components/tic-tac-toe/game'
+import GameList from './components/games/list';
+import TicTacToeGame from './components/tic-tac-toe/game';
 import Casino from './models/casino';
-import Sidebar from './components/sidebar/sidebar'
+import Sidebar from './components/sidebar/Sidebar';
+import Welcome from './components/Welcome';
+import CreateGame from './components/CreateGame';
 
 import Container from 'react-bootstrap/Container'
 import Col from 'react-bootstrap/Col'
@@ -18,9 +20,10 @@ class App extends Component {
     accounts: null,
     player: null,
     games: [],
-    view: null,
-    casinoAddress: '0x1847136F06C488A3593FB041683950FCEba6c96A',
+    view: 'welcome',
+    casinoAddress: '0x6996E2BdE0e92ea89570E4E8bf15a3226De90d56',
     casino: null,
+    casinoBalance: null,
     activeGame: null,
   };
 
@@ -41,6 +44,7 @@ class App extends Component {
       // Casino
       const casino = new Casino(web3, this.state.casinoAddress);
       const games = await casino.getActiveGames();
+      const casinoBalance = await web3.eth.getBalance(this.state.casinoAddress);
 
       // listen for events
 
@@ -55,9 +59,15 @@ class App extends Component {
         }
       );
 
+      const player = { address: accounts[0], balance: null };
+      player.balance = await web3.eth.getBalance(player.address);
+
+      // update some key things every few seconds
+      this.interval = setInterval(this.onRefresh.bind(this), 15000);
+
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, games, casino, player: accounts[0] });
+      this.setState({ web3, accounts, games, casino, casinoBalance, player });
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -67,8 +77,22 @@ class App extends Component {
     }
   };
 
+  async onRefresh() {
+    // Check the casino balance
+    const web3 = this.state.web3;
+    const casinoBalance = await web3.eth.getBalance(this.state.casinoAddress);
+    // Check our balance
+    const player = this.state.player;
+    player.balance = await web3.eth.getBalance(player.address);
+    this.setState({ casinoBalance, player });
+  }
+
   onOpenGame(address) {
     this.setState({ view: "game", activeGame: address });
+  }
+
+  onViewChange(view) {
+    this.setState({ view })
   }
 
   render() {
@@ -77,11 +101,17 @@ class App extends Component {
     }
     return (
       <Container fluid>
-        <Row>
-          <Sidebar />
-          <Col>
-            { !this.state.view && 
+        <Row className="full-height">
+          <Sidebar view={this.state.view} onViewChange={this.onViewChange.bind(this)} player={this.state.player} casinoAddress={this.state.casinoAddress} casinoBalance={this.state.casinoBalance} />
+          <Col className="full-height">
+            { this.state.view === 'welcome' &&
+              <Welcome web3={this.state.web3} casinoBalance={this.state.casinoBalance} />
+            }
+            { this.state.view === "list-games" && 
               <GameList games={this.state.games} web3={this.state.web3} casino={this.state.casino} player={this.state.player} onOpenGame={this.onOpenGame.bind(this)} />
+            }
+            { this.state.view === "create-game" && 
+              <CreateGame web3={this.state.web3} casino={this.state.casino} player={this.state.player} onOpenGame={this.onOpenGame.bind(this)} />
             }
             { this.state.view === "game" &&
               <TicTacToeGame
@@ -90,10 +120,6 @@ class App extends Component {
                 player={this.state.player}
                 />
             }
-            
-            <div>
-                Active account: {this.state.player}
-              </div>
           </Col>
         </Row>
       </Container>

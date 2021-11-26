@@ -1,8 +1,7 @@
 import React, { Component } from 'react'
 import Board from './board'
 import Message from './message'
-import Refresh from './refresh'
-
+import web3 from 'web3';
 import TicTacToeContract from "../../contracts/TicTacToe.json";
 
 
@@ -37,19 +36,30 @@ const fmtAddress = (address) => {
 }
 
 class TicTacToeGame extends Component {
-    state = { board: Array(9).fill(""), isPlayer: "X", contract: null, playerX: null, playerO: null, moves: [] };
+    state = { board: Array(9).fill(""), isPlayer: "X", contract: null, playerX: null, playerO: null, moves: [], winner: null, bet: "0", tip: "0" };
+
+    validPlayer(player) {
+        if (!player) {
+            return false;
+        }
+        return player !== '0x0000000000000000000000000000000000000000';
+    }
 
     msg() {
         const turn = this.state.moves.length;
-        const turnForX = turn % 2 == 0;
+        const turnForX = turn % 2 === 0;
 
-        if (this.state.winnerX) {
-            return "X won!"
+        if (!this.validPlayer(this.state.playerX) || !this.validPlayer(this.state.playerO)) {
+            return "Wait for another player to join the game";
         }
-        if (this.state.winnerO) {
-            return "O won!"
+
+        if (this.state.winner === "X") {
+            return "X won!";
         }
-        if ((turnForX && this.props.player == this.state.playerX) || (!turnForX && this.props.player == this.state.playerO)) {
+        if (this.state.winner === "O") {
+            return "O won!";
+        }
+        if ((turnForX && this.props.player.address === this.state.playerX) || (!turnForX && this.props.player.address === this.state.playerO)) {
             return "It's your move!";
         }
         return "Wait for the other player to move";
@@ -60,7 +70,7 @@ class TicTacToeGame extends Component {
             const moves = [...state.moves];
             const board = [...state.board];
             moves.push({ who, turn, pos, when });
-            board[pos] = turn % 2 == 0? "X": "O";
+            board[pos] = turn % 2 === 0? "X": "O";
             return { moves, board };
         })
     }
@@ -69,6 +79,8 @@ class TicTacToeGame extends Component {
         const contract = new this.props.web3.eth.Contract(TicTacToeContract.abi, this.props.address);
         const playerX = (await contract.methods.playerX().call()).toLowerCase();
         const playerO = (await contract.methods.playerO().call()).toLowerCase();
+        const bet = await contract.methods.bet().call();
+        const tip = await contract.methods.tip().call();
         const turn = Number(await contract.methods.turn().call());
         if (turn > 0) {
             Array.from(Array(turn).keys()).map(async (i) => {
@@ -77,15 +89,9 @@ class TicTacToeGame extends Component {
             });
         }
 
-        if (isWon()) {
-            const winner = turn % 2 == 0? 'X' : 'O';
-            this.setState({ winner })
-        }
-
-        // TODO: get current board and move history
+        // get current board and move history
 
         // register for events
-        // TODO: Start, end, new players registered, etc.
         contract.events.Move((err, evt) => {
             this.move(
                 evt.returnValues._who,
@@ -122,7 +128,26 @@ class TicTacToeGame extends Component {
             console.log(evt);
         });
 
-        this.setState({ contract, playerX, playerO });
+        contract.events.PlayerXJoined(async (err, evt) => {
+            console.log("PlayerXJoined")
+            console.log(evt)
+            const playerX = (await contract.methods.playerX().call()).toLowerCase();
+            this.setState({ playerX });
+        })
+
+        contract.events.PlayerOJoined(async (err, evt) => {
+            console.log("PlayerOJoined")
+            console.log(evt)
+            const playerO = (await contract.methods.playerO().call()).toLowerCase();
+            this.setState({ playerO });
+        })
+
+        this.setState({ contract, playerX, playerO, bet, tip }, () => {
+            if (isWon(this.state.board)) {
+                const winner = turn % 2 === 0? 'X' : 'O';
+                this.setState({ winner });
+            }
+        });
     }
     
     fmtWei(wei, unit="ether") {
@@ -142,26 +167,33 @@ class TicTacToeGame extends Component {
             return;
         }
 
+        if (!this.validPlayer(this.state.playerX) || !this.validPlayer(this.state.playerO)) {
+            // No player has joined yet
+            return;
+        }
+
         const turn = this.state.moves.length;
-        const turnForX = turn % 2 == 0;
-        if ((turnForX && this.props.player == this.state.playerX) || (!turnForX && this.props.player == this.state.playerO)) {
-            this.state.contract.methods.move(pos).send({ from: this.props.player });
+        const turnForX = turn % 2 === 0;
+        if ((turnForX && this.props.player.address === this.state.playerX) || (!turnForX && this.props.player.address === this.state.playerO)) {
+            this.state.contract.methods.move(pos).send({ from: this.props.player.address });
         } else {
             console.log(`Illegal movement pos=${pos} at turn=${turn}, turnForX=${turnForX}`)
         }
     }
 
     opponent() {
-        const isPlayerX = this.props.player == this.state.playerX;
+        const isPlayerX = this.props.player.address === this.state.playerX;
         return isPlayerX? this.state.playerO : this.state.playerX;
     }
 
     render() {
         return (
             <div>
+                <h1 className="display-1">Tic Tac Toe game</h1>
+                <h1 className="display-6">Playing for {web3.utils.fromWei(this.state.bet)} ETH ({web3.utils.fromWei(this.state.tip)} ETH tip to the casino + 3% fees)</h1>
                 <Message value={this.msg()} />
                 <Board onClick={this.handleInput.bind(this)} value={this.state.board} /> 
-                <p>Player's address: <i>{fmtAddress(this.props.player)}</i></p>
+                <p>Player's address: <i>{fmtAddress(this.props.player.address)}</i></p>
                 <p>Opponent's address: <i>{fmtAddress(this.opponent())}</i></p>
                 <p>Contract's address: <i>{fmtAddress(this.props.address)}</i></p>
             </div>

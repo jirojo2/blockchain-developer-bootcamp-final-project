@@ -24,3 +24,7 @@
 body > #root > div > .row {
   height: 100vh;
 }
+
+.full-height {
+  height: 100vh;
+}

@@ -16,8 +16,8 @@ class Casino {
         return games;
     }
 
-    createGameTicTacToe(player, isX) {
-        return this.contract.methods.newTicTacToeGame(player, isX).send({ from: player, value: "10000000000000000000" });
+    createGameTicTacToe(player, isX, bet) {
+        return this.contract.methods.newTicTacToeGame(player, isX).send({ from: player, value: bet });
     }
 
 }

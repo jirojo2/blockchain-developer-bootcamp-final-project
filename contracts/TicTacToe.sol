@@ -37,8 +37,8 @@ contract TicTacToe is Game {
   Movement[] public moves;
 
   uint public id;
-  uint private bet = 0;
-  uint private tip = 0;
+  uint public bet = 0;
+  uint public tip = 0;
 
   address public playerX;
   address public playerO;

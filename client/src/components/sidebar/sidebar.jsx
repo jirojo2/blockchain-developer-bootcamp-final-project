@@ -1,6 +1,7 @@
 import React from 'react';
 import Col from 'react-bootstrap/Col';
 import Nav from 'react-bootstrap/Nav';
+import web3 from 'web3';
 
 const Sidebar = (props) => {
     return (
@@ -11,26 +12,28 @@ const Sidebar = (props) => {
             <hr />
 
             <Nav
-                activeKey="/home"
-                onSelect={(selectedKey) => alert(`selected ${selectedKey}`)}
+                activeKey={props.view}
+                onSelect={(selectedKey) => props.onViewChange(selectedKey)}
                 variant="pills"
                 className="flex-column"
             >
                 <Nav.Item>
-                    <Nav.Link href="/home">Active games</Nav.Link>
+                    <Nav.Link eventKey="welcome">Home</Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                    <Nav.Link eventKey="link-1">Link</Nav.Link>
+                    <Nav.Link eventKey="list-games">Active games</Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                    <Nav.Link eventKey="link-2">Link</Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                    <Nav.Link eventKey="disabled" disabled>
-                    Disabled
-                    </Nav.Link>
+                    <Nav.Link eventKey="create-game">Create Game</Nav.Link>
                 </Nav.Item>
             </Nav>
+
+            <hr/>
+            <p>Active account: {props.player.address}</p>
+            <p>Balance: {web3.utils.fromWei(props.player.balance)} ETH</p>
+            <hr/>
+            <p>Casino address: {props.casinoAddress}</p>
+            <p>Balance: {web3.utils.fromWei(props.casinoBalance)} ETH</p>
         </Col>
     );
 }
