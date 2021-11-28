@@ -13,7 +13,7 @@ const CreateGame = (props) => {
     const [creatingGame, setCreatingGame] = useState(null);
 
     const createGame = (isX, e) => {
-        const betWei = web3.utils.toWei(bet)
+        const betWei = web3.utils.toWei(bet.toString())
         console.log(`Create game as x=${isX}, player=${props.player}, bet=${bet} betWei=${betWei}`)
 
         // call the casino contract to deploy a new game contract with our account as registrator

@@ -26,7 +26,7 @@ class GameList extends Component {
                             </tr>
                         </thead>
                         <tbody>
-                            {this.props.games.map((game, i) => <GameRow web3={this.props.web3} address={game} player={this.props.player} key={i} onOpenGame={this.props.onOpenGame} />)}
+                            {this.props.games.map((game, i) => <GameRow web3={this.props.web3} address={game} player={this.props.player} key={game} onOpenGame={this.props.onOpenGame} />)}
                         </tbody>
                     </Table>
                 }

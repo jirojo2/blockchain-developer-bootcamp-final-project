@@ -29,10 +29,10 @@ const Sidebar = (props) => {
             </Nav>
 
             <hr/>
-            <p>Active account: {props.player.address}</p>
+            <p>Active account: <small className="fs-9 fw-lighter badge bg-secondary">{props.player.address}</small></p>
             <p>Balance: {web3.utils.fromWei(props.player.balance)} ETH</p>
             <hr/>
-            <p>Casino address: {props.casinoAddress}</p>
+            <p>Casino address: <small className="fs-9 fw-lighter badge bg-secondary">{props.casinoAddress}</small></p>
             <p>Balance: {web3.utils.fromWei(props.casinoBalance)} ETH</p>
         </Col>
     );

@@ -57,8 +57,8 @@ export class GameRow extends Component {
                     <td>{this.state.id}</td>
                     <td>{this.state.type}</td>
                     <td>{web3.utils.fromWei(this.state.bet)} ETH</td>
-                    <td>{this.props.address}</td>
-                    <td>{this.state.registrator}</td>
+                    <td><small className="fs-9 fw-lighter badge bg-secondary">{this.props.address}</small></td>
+                    <td><small className="fs-9 fw-lighter badge bg-secondary">{this.state.registrator}</small></td>
                     <td>{registerButton}</td>
                 </tr>
             );
