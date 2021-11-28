@@ -1,0 +1,41 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "http://jirojo2.github.io/blockchain-developer-bootcamp-final-project",
+  "dependencies": {
+    "bootstrap": "^5.1.3",
+    "react": ">=16.14.0",
+    "react-bootstrap": "^2.0.2",
+    "react-bootstrap-icons": "^1.6.1",
+    "react-dom": ">=16.14.0",
+    "react-scripts": "^4.0.3",
+    "web3": "^1.2.11"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "gh-pages": "^3.2.3"
+  }
+}
